@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: ing-nginx
   namespace: homework
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /homepage
 spec:
   ingressClassName: nginx
   rules:

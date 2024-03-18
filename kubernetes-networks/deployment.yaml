@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dp-web
+  namespace: homework
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+       app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      initContainers:
+      - name: nginx-init
+        image: busybox:1.28
+        command: ['sh', '-c', 'wget -O /init/index.html http://example.com/index.html']
+        volumeMounts:
+        - mountPath: /init
+          name: nginx-volume
+      containers:
+      - name: nginx
+        image: 310581/otus-kuber-2024-01-nginx:latest
+        workingDir: /homework
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - mountPath: /homework
+          name: nginx-volume
+        lifecycle:
+          preStop:
+            exec:
+              command: ['sh', '-c', 'rm -rf /homework/index.html']
+        readinessProbe:
+          httpGet:
+            path: /index.html
+            port: 8000
+          failureThreshold: 1
+          periodSeconds: 5
+      volumes:
+      - name: nginx-volume
+        emptyDir:
+          sizeLimit: 50Mi
+      nodeSelector:
+        homework: 'true'

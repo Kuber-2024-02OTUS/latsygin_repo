@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dp-web
+  namespace: homework
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+       app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      serviceAccountName: monitoring
+      initContainers:
+      - name: nginx-init
+        image: alpine:3.12
+        command:
+          - sh
+          - -c
+          - |
+            apk --update add curl
+            KUBEAPI=https://kubernetes.default.svc
+            SA=/var/run/secrets/kubernetes.io/serviceaccount
+            CACERT=${SA}/ca.crt
+            TOKEN=$(cat ${SA}/token)
+            curl --cacert ${CACERT} --header "Authorization: Bearer ${TOKEN}" -X GET ${KUBEAPI}/metrics > /init/metrics.html
+            wget -O /init/index.html http://example.com/index.html
+        volumeMounts:
+        - mountPath: /init
+          name: metrics-volume
+      containers:
+      - name: nginx
+        image: 310581/otus-kuber-2024-01-nginx:1.0.0
+        workingDir: /homework
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - mountPath: /homework
+          name: metrics-volume
+        lifecycle:
+          preStop:
+            exec:
+              command: ['sh', '-c', 'rm -rf /homework/index.html']
+        readinessProbe:
+          httpGet:
+            path: /index.html
+            port: 8000
+          failureThreshold: 1
+          periodSeconds: 5
+      volumes:
+      - name: metrics-volume
+        persistentVolumeClaim:
+          claimName: kuber-pvc
+      nodeSelector:
+        homework: 'true'

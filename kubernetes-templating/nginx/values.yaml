@@ -1,0 +1,157 @@
+# Default values for nginx.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+workingDir: /homework
+namespace: homework
+
+image:
+  repository: 310581/otus-kuber-2024-01-nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+strategyDeploy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 1
+
+initContainer:
+  imageRepositoy: alpine
+  imageTag: "3.12"
+  command:
+    - sh
+    - -c
+    - |
+      apk --update add curl
+      KUBEAPI=https://kubernetes.default.svc
+      SA=/var/run/secrets/kubernetes.io/serviceaccount
+      CACERT=${SA}/ca.crt
+      TOKEN=$(cat ${SA}/token)
+      curl --cacert ${CACERT} --header "Authorization: Bearer ${TOKEN}" -X GET ${KUBEAPI}/metrics > /init/metrics.html
+      wget -O /init/index.html http://example.com/index.html
+  volumeMounts:
+    - name: metrics-volume
+      mountPath: /init
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations:
+    kubernetes.io/enforce-mountable-secrets: "true"
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "monitoring"
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  name: svc-nginx-cip
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: homework.otus
+      paths:
+        - path: /index.html
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: "{{ .Values.service.name }}"
+              port:
+                number: "{{ .Values.service.port }}"
+        - path: /metrics.html
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: "{{ .Values.service.name }}"
+              port:
+                number: "{{ .Values.service.port }}"
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Probes and lifecycle can be disabled by specifying an empty {} element
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /index.html
+    port: http
+  failureThreshold: 1
+  periodSeconds: 5
+lifecycle:
+  preStop:
+    exec:
+      command: ["sh", "-c", "rm -rf /homework/index.html"]
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes:
+ - name: metrics-volume
+   persistentVolumeClaim:
+     claimName: kuber-pvc
+
+volumeMounts:
+ - name: metrics-volume
+   mountPath: "/homework"
+
+nodeSelector: []
+
+redis:
+  architecture: standalone
+  namespaceOverride: homework
+
+tolerations: []
+
+affinity: {}

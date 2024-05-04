@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ing-nginx
+  namespace: homework
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: homework.otus
+    http:
+      paths:
+      - path: /index.html
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: svc-nginx-cip
+            port:
+              number: 80
+      - path: /basic_status
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: svc-nginx-cip
+            port:
+              number: 80
+      - path: /metrics
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: svc-nginx-exp
+            port:
+              number: 9113

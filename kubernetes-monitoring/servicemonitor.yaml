@@ -1,0 +1,12 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nginx-sm
+  namespace: homework
+spec:
+  endpoints:
+  - path: /metrics
+    port: svc-nginx-exporter
+  selector:
+    matchLabels:
+      app: nginx

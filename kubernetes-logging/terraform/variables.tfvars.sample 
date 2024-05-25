@@ -1,0 +1,11 @@
+# the following variables must be defined before using main.tf file
+
+# identity info for connect to provider
+cloud_id        = ""
+folder_id       = ""
+
+# token for provider
+token           = ""
+
+# path for public key (for using on the hosts of cluster)
+public_key_path = ""

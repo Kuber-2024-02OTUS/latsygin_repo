@@ -1,0 +1,17 @@
+# Локальные каталоги .terraform
+**/.terraform/**
+
+# Локальные файлы .terraform
+**.terraform**
+
+# Файлы переменных
+*.tfvars
+
+# Файлы состтояния проекта
+*.tfstate*
+
+# Файлы журнала сбоев
+crash.log
+
+# swap file .gitignore
+*.swp

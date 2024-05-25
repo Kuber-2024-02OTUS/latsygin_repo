@@ -1,0 +1,26 @@
+---
+repositories:
+- name: grafana
+  url: https://grafana.github.io/helm-charts
+
+releases:
+- name: grafana
+  namespace: monitoring
+  chart: grafana/grafana
+  version: 7.3.8
+  values: 
+  - grafana.yaml
+
+- name: loki
+  namespace: monitoring
+  chart: grafana/loki
+  version: 6.2.0
+  values:
+  - loki.yaml
+
+- name: promatil
+  namespace: monitoring
+  chart: grafana/promtail
+  version: 6.15.5
+  values: 
+  - promtail.yaml

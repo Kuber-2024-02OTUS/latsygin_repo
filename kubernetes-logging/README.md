@@ -50,10 +50,6 @@ kubectl --namespace monitoring port-forward service/grafana 3000:80
 ```
 Открыть в браузере URL http://127.0.0.1:3000/
 
-
-Для инфраструктурной ноды/нод добавьте taint, запрещающий на нее планирование подов с посторонней нагрузкой -
-node-role=infra:NoSchedule
-
 ## Вывод команд
 
 ```bash
@@ -72,3 +68,5 @@ work-2    <none>
 <p align="center">
   <img src="./screenshot/screenshot.png" width="450" title="hover text">
 </p>
+
+В Grafana необходимо настроить data source к loki и сделать explore по этому datasource и убедиться, что логи отображаются. Приложить скриншот этого экрана из Grafana
